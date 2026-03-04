@@ -1,52 +1,1982 @@
 openapi: 3.1.0
 info:
-  title: DiskCortex Local API
+  title: DiskCortex API
   version: 0.1.0
   description: |
-    Local loopback API for DiskCortex GUI/CLI to discover tools, scan disk usage,
-    create cleanup plans, and execute safe cleanups with explicit user confirmation.
-    NEVER deletes without confirmation token.
+    Enterprise-grade disk cleanup automation with intelligent tool discovery,
+    safe deletion protocols, and cross-platform support.
+    
+    **Core Principle**: NEVER deletes without explicit user confirmation.
   license:
     name: MIT
+  contact:
+    name: DiskCortex Team
+    url: https://github.com/Ruben-Alvarez-Dev/DiskCortex
+
 servers:
   - url: http://127.0.0.1:7331
     description: Local daemon
+
 tags:
   - name: system
+    description: System health and configuration
+  - name: auth
+    description: Authentication and authorization
+  - name: users
+    description: User management
   - name: registry
+    description: Tool registry management
   - name: discovery
+    description: Auto-discovery of tools
   - name: scans
+    description: Disk usage scanning
   - name: cleanup
+    description: Cleanup planning and execution
   - name: docker
+    description: Docker integration
   - name: schedules
+    description: Automated scheduling
   - name: logs
-  - name: mcp
+    description: Audit and operation logs
+  - name: compliance
+    description: Regulatory compliance
+
 security:
+  - BearerAuth: []
   - SessionTokenAuth: []
+
 paths:
+  # ─────────────────────────────────────────────────────────────────────────
+  # SYSTEM
+  # ─────────────────────────────────────────────────────────────────────────
+  
   /health:
     get:
       tags: [system]
       summary: Health check
+      security: []
       responses:
         "200":
+          description: System healthy
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+  
+  /system/info:
+    get:
+      tags: [system]
+      summary: System information
+      responses:
+        "200":
+          description: System details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemInfo"
+
+  /system/config:
+    get:
+      tags: [system]
+      summary: Get configuration
+      responses:
+        "200":
+          description: Current configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Config"
+    put:
+      tags: [system]
+      summary: Update configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigUpdate"
+      responses:
+        "200":
+          description: Configuration updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Config"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # AUTHENTICATION
+  # ─────────────────────────────────────────────────────────────────────────
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Authenticate user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Logout current session
+      responses:
+        "204":
+          description: Logged out
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/session:
+    get:
+      tags: [auth]
+      summary: Get current session info
+      responses:
+        "200":
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionInfo"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # USERS
+  # ─────────────────────────────────────────────────────────────────────────
+
+  /users:
+    get:
+      tags: [users]
+      summary: List all users
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: role
+          in: query
+          schema:
+            $ref: "#/components/schemas/UserRole"
+      responses:
+        "200":
+          description: User list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+    
+    post:
+      tags: [users]
+      summary: Create new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [users]
+      summary: Get user by ID
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: User not found
+    
+    put:
+      tags: [users]
+      summary: Update user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    
+    delete:
+      tags: [users]
+      summary: Delete user
+      responses:
+        "204":
+          description: User deleted
+
+  /users/{userId}/permissions:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [users]
+      summary: Get user permissions
+      responses:
+        "200":
+          description: User permissions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionList"
+    
+    put:
+      tags: [users]
+      summary: Update user permissions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePermissionsRequest"
+      responses:
+        "200":
+          description: Permissions updated
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # TOOL REGISTRY
+  # ─────────────────────────────────────────────────────────────────────────
+
+  /registry/tools:
+    get:
+      tags: [registry]
+      summary: List registered tools
+      parameters:
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/ToolCategory"
+        - name: installed
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Tool list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolListResponse"
+    
+    post:
+      tags: [registry]
+      summary: Register new tool
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterToolRequest"
+      responses:
+        "201":
+          description: Tool registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+
+  /registry/tools/{toolId}:
+    parameters:
+      - name: toolId
+        in: path
+        required: true
+        schema:
+          type: string
+    
+    get:
+      tags: [registry]
+      summary: Get tool details
+      responses:
+        "200":
+          description: Tool details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+        "404":
+          description: Tool not found
+    
+    put:
+      tags: [registry]
+      summary: Update tool registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateToolRequest"
+      responses:
+        "200":
+          description: Tool updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+    
+    delete:
+      tags: [registry]
+      summary: Unregister tool
+      responses:
+        "204":
+          description: Tool unregistered
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # DISCOVERY
+  # ─────────────────────────────────────────────────────────────────────────
+
+  /discovery/scan:
+    post:
+      tags: [discovery]
+      summary: Run tool discovery scan
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscoveryScanRequest"
+      responses:
+        "202":
+          description: Discovery started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanJob"
+
+  /discovery/jobs/{jobId}:
+    parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [discovery]
+      summary: Get discovery job status
+      responses:
+        "200":
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanJob"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # SCANS
+  # ─────────────────────────────────────────────────────────────────────────
+
+  /scans:
+    get:
+      tags: [scans]
+      summary: List disk scans
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ScanStatus"
+      responses:
+        "200":
+          description: Scan list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanListResponse"
+
+  /scans/full:
+    post:
+      tags: [scans]
+      summary: Run full disk scan
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FullScanRequest"
+      responses:
+        "202":
+          description: Scan started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanJob"
+
+  /scans/tool/{toolId}:
+    parameters:
+      - name: toolId
+        in: path
+        required: true
+        schema:
+          type: string
+    
+    get:
+      tags: [scans]
+      summary: Get tool disk usage
+      responses:
+        "200":
+          description: Tool disk usage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolDiskUsage"
+
+  /scans/jobs/{jobId}:
+    parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [scans]
+      summary: Get scan job details
+      responses:
+        "200":
+          description: Scan job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanJobDetail"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # CLEANUP
+  # ─────────────────────────────────────────────────────────────────────────
+
+  /cleanup/plans:
+    get:
+      tags: [cleanup]
+      summary: List cleanup plans
+      responses:
+        "200":
+          description: Plan list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CleanupPlanListResponse"
+    
+    post:
+      tags: [cleanup]
+      summary: Create cleanup plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCleanupPlanRequest"
+      responses:
+        "201":
+          description: Plan created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CleanupPlan"
+
+  /cleanup/plans/{planId}:
+    parameters:
+      - name: planId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [cleanup]
+      summary: Get cleanup plan details
+      responses:
+        "200":
+          description: Plan details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CleanupPlanDetail"
+    
+    delete:
+      tags: [cleanup]
+      summary: Delete cleanup plan
+      responses:
+        "204":
+          description: Plan deleted
+
+  /cleanup/plans/{planId}/confirm:
+    parameters:
+      - name: planId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    post:
+      tags: [cleanup]
+      summary: Confirm cleanup plan execution
+      description: |
+        **CRITICAL**: This endpoint requires explicit user confirmation.
+        The confirmation token must match the plan's confirmation token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmCleanupRequest"
+      responses:
+        "202":
+          description: Cleanup execution started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CleanupExecution"
+
+  /cleanup/executions/{executionId}:
+    parameters:
+      - name: executionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [cleanup]
+      summary: Get cleanup execution status
+      responses:
+        "200":
+          description: Execution status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CleanupExecutionDetail"
+    
+    post:
+      tags: [cleanup]
+      summary: Cancel running execution
+      responses:
+        "200":
+          description: Execution cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CleanupExecution"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # DOCKER
+  # ─────────────────────────────────────────────────────────────────────────
+
+  /docker/status:
+    get:
+      tags: [docker]
+      summary: Get Docker daemon status
+      responses:
+        "200":
+          description: Docker status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DockerStatus"
+
+  /docker/images:
+    get:
+      tags: [docker]
+      summary: List Docker images
+      responses:
+        "200":
+          description: Image list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DockerImageListResponse"
+
+  /docker/containers:
+    get:
+      tags: [docker]
+      summary: List Docker containers
+      responses:
+        "200":
+          description: Container list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DockerContainerListResponse"
+
+  /docker/volumes:
+    get:
+      tags: [docker]
+      summary: List Docker volumes
+      responses:
+        "200":
+          description: Volume list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DockerVolumeListResponse"
+
+  /docker/cleanup/preview:
+    post:
+      tags: [docker]
+      summary: Preview Docker cleanup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DockerCleanupPreviewRequest"
+      responses:
+        "200":
+          description: Cleanup preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DockerCleanupPreview"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # SCHEDULES
+  # ─────────────────────────────────────────────────────────────────────────
+
+  /schedules:
+    get:
+      tags: [schedules]
+      summary: List all schedules
+      responses:
+        "200":
+          description: Schedule list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleListResponse"
+    
+    post:
+      tags: [schedules]
+      summary: Create new schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateScheduleRequest"
+      responses:
+        "201":
+          description: Schedule created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Schedule"
+
+  /schedules/{scheduleId}:
+    parameters:
+      - name: scheduleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [schedules]
+      summary: Get schedule details
+      responses:
+        "200":
+          description: Schedule details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleDetail"
+    
+    put:
+      tags: [schedules]
+      summary: Update schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateScheduleRequest"
+      responses:
+        "200":
+          description: Schedule updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Schedule"
+    
+    delete:
+      tags: [schedules]
+      summary: Delete schedule
+      responses:
+        "204":
+          description: Schedule deleted
+
+  /schedules/{scheduleId}/toggle:
+    parameters:
+      - name: scheduleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    post:
+      tags: [schedules]
+      summary: Enable/disable schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+              required:
+                - enabled
+      responses:
+        "200":
+          description: Schedule toggled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Schedule"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # LOGS
+  # ─────────────────────────────────────────────────────────────────────────
+
+  /logs:
+    get:
+      tags: [logs]
+      summary: Query audit logs
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: userId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: action
+          in: query
+          schema:
+            $ref: "#/components/schemas/LogAction"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogResponse"
+
+  /logs/export:
+    post:
+      tags: [logs]
+      summary: Export audit logs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExportLogsRequest"
+      responses:
+        "200":
+          description: Log export
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogExport"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # COMPLIANCE
+  # ─────────────────────────────────────────────────────────────────────────
+
+  /compliance/report:
+    get:
+      tags: [compliance]
+      summary: Generate compliance report
+      parameters:
+        - name: framework
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/ComplianceFramework"
+      responses:
+        "200":
+          description: Compliance report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplianceReport"
+
+  /compliance/policies:
+    get:
+      tags: [compliance]
+      summary: List compliance policies
+      responses:
+        "200":
+          description: Policy list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyListResponse"
+    
+    post:
+      tags: [compliance]
+      summary: Create compliance policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePolicyRequest"
+      responses:
+        "201":
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Policy"
+
+  /compliance/policies/{policyId}:
+    parameters:
+      - name: policyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [compliance]
+      summary: Get policy details
+      responses:
+        "200":
+          description: Policy details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyDetail"
+    
+    put:
+      tags: [compliance]
+      summary: Update policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePolicyRequest"
+      responses:
+        "200":
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Policy"
+    
+    delete:
+      tags: [compliance]
+      summary: Delete policy
+      responses:
+        "204":
+          description: Policy deleted
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────────────────────────
+
 components:
   securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
     SessionTokenAuth:
       type: apiKey
       in: header
       name: X-Session-Token
+
   schemas:
+    # ───────────────────────────────────────────────────────────────────────
+    # SYSTEM
+    # ───────────────────────────────────────────────────────────────────────
+
     HealthResponse:
       type: object
+      required: [status, time]
       properties:
         status:
           type: string
-          enum: [ok]
+          enum: [ok, degraded, error]
         time:
           type: string
           format: date-time
+        version:
+          type: string
+        uptime:
+          type: integer
+          description: Uptime in seconds
+
+    SystemInfo:
+      type: object
+      properties:
+        platform:
+          type: string
+          enum: [darwin, linux, windows]
+        arch:
+          type: string
+        hostname:
+          type: string
+        version:
+          type: string
+        dbVersion:
+          type: string
+
+    Config:
+      type: object
+      properties:
+        scanPaths:
+          type: array
+          items:
+            type: string
+        excludePaths:
+          type: array
+          items:
+            type: string
+        maxScanDepth:
+          type: integer
+        confirmRequired:
+          type: boolean
+        logLevel:
+          type: string
+          enum: [debug, info, warn, error]
+
+    ConfigUpdate:
+      type: object
+      properties:
+        scanPaths:
+          type: array
+          items:
+            type: string
+        excludePaths:
+          type: array
+          items:
+            type: string
+        maxScanDepth:
+          type: integer
+        confirmRequired:
+          type: boolean
+        logLevel:
+          type: string
+          enum: [debug, info, warn, error]
+
+    # ───────────────────────────────────────────────────────────────────────
+    # AUTH
+    # ───────────────────────────────────────────────────────────────────────
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+        tokenType:
+          type: string
+          default: Bearer
+
+    SessionInfo:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+        permissions:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+    # ───────────────────────────────────────────────────────────────────────
+    # USERS
+    # ───────────────────────────────────────────────────────────────────────
+
+    UserRole:
+      type: string
+      enum: [admin, operator, viewer]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: "#/components/schemas/UserRole"
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    CreateUserRequest:
+      type: object
+      required: [username, email, password, role]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        role:
+          $ref: "#/components/schemas/UserRole"
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          $ref: "#/components/schemas/UserRole"
+        active:
+          type: boolean
+
+    PermissionList:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+
+    UpdatePermissionsRequest:
+      type: object
+      required: [permissions]
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+
+    # ───────────────────────────────────────────────────────────────────────
+    # TOOLS
+    # ───────────────────────────────────────────────────────────────────────
+
+    ToolCategory:
+      type: string
+      enum: [ai_tool, ide, build_system, package_manager, runtime, container, other]
+
+    Tool:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          $ref: "#/components/schemas/ToolCategory"
+        description:
+          type: string
+        version:
+          type: string
+        installed:
+          type: boolean
+        installPath:
+          type: string
+        cachePaths:
+          type: array
+          items:
+            type: string
+        configPaths:
+          type: array
+          items:
+            type: string
+        safeToClean:
+          type: array
+          items:
+            type: string
+        requiresConfirmation:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ToolListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tool"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    RegisterToolRequest:
+      type: object
+      required: [name, category]
+      properties:
+        name:
+          type: string
+        category:
+          $ref: "#/components/schemas/ToolCategory"
+        description:
+          type: string
+        cachePaths:
+          type: array
+          items:
+            type: string
+        configPaths:
+          type: array
+          items:
+            type: string
+        safeToClean:
+          type: array
+          items:
+            type: string
+        requiresConfirmation:
+          type: boolean
+          default: true
+
+    UpdateToolRequest:
+      type: object
+      properties:
+        description:
+          type: string
+        cachePaths:
+          type: array
+          items:
+            type: string
+        configPaths:
+          type: array
+          items:
+            type: string
+        safeToClean:
+          type: array
+          items:
+            type: string
+        requiresConfirmation:
+          type: boolean
+
+    # ───────────────────────────────────────────────────────────────────────
+    # SCANS
+    # ───────────────────────────────────────────────────────────────────────
+
+    ScanStatus:
+      type: string
+      enum: [pending, running, completed, failed, cancelled]
+
+    ScanJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [discovery, full_scan, tool_scan]
+        status:
+          $ref: "#/components/schemas/ScanStatus"
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    DiscoveryScanRequest:
+      type: object
+      properties:
+        paths:
+          type: array
+          items:
+            type: string
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/ToolCategory"
+
+    FullScanRequest:
+      type: object
+      properties:
+        paths:
+          type: array
+          items:
+            type: string
+        excludePaths:
+          type: array
+          items:
+            type: string
+
+    ScanJobDetail:
+      allOf:
+        - $ref: "#/components/schemas/ScanJob"
+        - type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: "#/components/schemas/ScanResult"
+
+    ScanResult:
+      type: object
+      properties:
+        toolId:
+          type: string
+        toolName:
+          type: string
+        path:
+          type: string
+        size:
+          type: integer
+          description: Size in bytes
+        fileCount:
+          type: integer
+        category:
+          $ref: "#/components/schemas/ToolCategory"
+
+    ScanListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScanJob"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    ToolDiskUsage:
+      type: object
+      properties:
+        toolId:
+          type: string
+        toolName:
+          type: string
+        totalSize:
+          type: integer
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+              size:
+                type: integer
+              category:
+                type: string
+                enum: [cache, logs, build, temp, data]
+
+    # ───────────────────────────────────────────────────────────────────────
+    # CLEANUP
+    # ───────────────────────────────────────────────────────────────────────
+
+    CleanupPlan:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, pending_confirmation, confirmed, executing, completed, failed]
+        totalSize:
+          type: integer
+        itemCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        confirmationToken:
+          type: string
+          description: Token required for execution confirmation
+
+    CleanupPlanDetail:
+      allOf:
+        - $ref: "#/components/schemas/CleanupPlan"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/CleanupItem"
+
+    CleanupItem:
+      type: object
+      properties:
+        id:
+          type: string
+        toolId:
+          type: string
+        toolName:
+          type: string
+        path:
+          type: string
+        size:
+          type: integer
+        category:
+          type: string
+          enum: [cache, logs, build, temp, docker_image, docker_volume, docker_container]
+        risk:
+          type: string
+          enum: [safe, low, medium, high]
+        description:
+          type: string
+
+    CleanupPlanListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CleanupPlan"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    CreateCleanupPlanRequest:
+      type: object
+      required: [name, items]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            required: [toolId, path]
+            properties:
+              toolId:
+                type: string
+              path:
+                type: string
+
+    ConfirmCleanupRequest:
+      type: object
+      required: [confirmationToken]
+      properties:
+        confirmationToken:
+          type: string
+          description: Must match the plan's confirmation token
+
+    CleanupExecution:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        planId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+        progress:
+          type: number
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    CleanupExecutionDetail:
+      allOf:
+        - $ref: "#/components/schemas/CleanupExecution"
+        - type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: "#/components/schemas/CleanupResult"
+
+    CleanupResult:
+      type: object
+      properties:
+        itemId:
+          type: string
+        path:
+          type: string
+        success:
+          type: boolean
+        sizeReclaimed:
+          type: integer
+        error:
+          type: string
+
+    # ───────────────────────────────────────────────────────────────────────
+    # DOCKER
+    # ───────────────────────────────────────────────────────────────────────
+
+    DockerStatus:
+      type: object
+      properties:
+        running:
+          type: boolean
+        version:
+          type: string
+        apiVersion:
+          type: string
+
+    DockerImage:
+      type: object
+      properties:
+        id:
+          type: string
+        repository:
+          type: string
+        tag:
+          type: string
+        size:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        inUse:
+          type: boolean
+
+    DockerImageListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DockerImage"
+
+    DockerContainer:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        image:
+          type: string
+        status:
+          type: string
+        state:
+          type: string
+          enum: [running, exited, paused]
+        size:
+          type: integer
+
+    DockerContainerListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DockerContainer"
+
+    DockerVolume:
+      type: object
+      properties:
+        name:
+          type: string
+        driver:
+          type: string
+        size:
+          type: integer
+        mountpoint:
+          type: string
+        inUse:
+          type: boolean
+
+    DockerVolumeListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DockerVolume"
+
+    DockerCleanupPreviewRequest:
+      type: object
+      properties:
+        removeUnusedImages:
+          type: boolean
+        removeStoppedContainers:
+          type: boolean
+        removeUnusedVolumes:
+          type: boolean
+        removeBuildCache:
+          type: boolean
+
+    DockerCleanupPreview:
+      type: object
+      properties:
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/DockerImage"
+        containers:
+          type: array
+          items:
+            $ref: "#/components/schemas/DockerContainer"
+        volumes:
+          type: array
+          items:
+            $ref: "#/components/schemas/DockerVolume"
+        buildCache:
+          type: integer
+        totalReclaimable:
+          type: integer
+
+    # ───────────────────────────────────────────────────────────────────────
+    # SCHEDULES
+    # ───────────────────────────────────────────────────────────────────────
+
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        enabled:
+          type: boolean
+        cron:
+          type: string
+        nextRun:
+          type: string
+          format: date-time
+        lastRun:
+          type: string
+          format: date-time
+
+    ScheduleDetail:
+      allOf:
+        - $ref: "#/components/schemas/Schedule"
+        - type: object
+          properties:
+            actions:
+              type: array
+              items:
+                $ref: "#/components/schemas/ScheduleAction"
+            history:
+              type: array
+              items:
+                $ref: "#/components/schemas/ScheduleExecution"
+
+    ScheduleAction:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [scan, cleanup, discovery]
+        config:
+          type: object
+          additionalProperties: true
+
+    ScheduleExecution:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        executedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [success, failed]
+        result:
+          type: object
+
+    ScheduleListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Schedule"
+
+    CreateScheduleRequest:
+      type: object
+      required: [name, cron, actions]
+      properties:
+        name:
+          type: string
+        cron:
+          type: string
+        enabled:
+          type: boolean
+          default: true
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleAction"
+
+    UpdateScheduleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        cron:
+          type: string
+        enabled:
+          type: boolean
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleAction"
+
+    # ───────────────────────────────────────────────────────────────────────
+    # LOGS
+    # ───────────────────────────────────────────────────────────────────────
+
+    LogAction:
+      type: string
+      enum: [login, logout, scan, cleanup, config_change, user_create, user_update, user_delete, schedule_create, schedule_execute]
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        action:
+          $ref: "#/components/schemas/LogAction"
+        resource:
+          type: string
+        resourceId:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+
+    AuditLogResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    ExportLogsRequest:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        format:
+          type: string
+          enum: [json, csv]
+
+    LogExport:
+      type: object
+      properties:
+        downloadUrl:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+    # ───────────────────────────────────────────────────────────────────────
+    # COMPLIANCE
+    # ───────────────────────────────────────────────────────────────────────
+
+    ComplianceFramework:
+      type: string
+      enum: [gdpr, soc2, hipaa, iso27001, pci-dss]
+
+    ComplianceReport:
+      type: object
+      properties:
+        framework:
+          $ref: "#/components/schemas/ComplianceFramework"
+        generatedAt:
+          type: string
+          format: date-time
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        status:
+          type: string
+          enum: [compliant, partially_compliant, non_compliant]
+        findings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComplianceFinding"
+
+    ComplianceFinding:
+      type: object
+      properties:
+        id:
+          type: string
+        category:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low, info]
+        description:
+          type: string
+        recommendation:
+          type: string
+        status:
+          type: string
+          enum: [open, in_progress, resolved]
+
+    Policy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        framework:
+          $ref: "#/components/schemas/ComplianceFramework"
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PolicyDetail:
+      allOf:
+        - $ref: "#/components/schemas/Policy"
+        - type: object
+          properties:
+            rules:
+              type: array
+              items:
+                $ref: "#/components/schemas/PolicyRule"
+
+    PolicyRule:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        condition:
+          type: object
+        action:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+
+    PolicyListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Policy"
+
+    CreatePolicyRequest:
+      type: object
+      required: [name, framework, rules]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        framework:
+          $ref: "#/components/schemas/ComplianceFramework"
+        enabled:
+          type: boolean
+          default: true
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/PolicyRule"
+
+    UpdatePolicyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/PolicyRule"
+
+    # ───────────────────────────────────────────────────────────────────────
+    # COMMON
+    # ───────────────────────────────────────────────────────────────────────
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
