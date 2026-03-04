@@ -4,14 +4,14 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Ruben-Alvarez-Dev"]
 license = "MIT"
-description = "Enterprise-grade disk cleanup automation daemon"
+description = "Enterprise-grade disk cleanup automation with TUI and GUI"
 repository = "https://github.com/Ruben-Alvarez-Dev/DiskCortex"
 
 [dependencies]
 # Async runtime
 tokio = { version = "1", features = ["full"] }
 
-# Web framework
+# Web framework (daemon API)
 axum = "0.7"
 tower = "0.4"
 tower-http = { version = "0.5", features = ["cors", "trace"] }
@@ -31,6 +31,13 @@ argon2 = "0.5"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
+# TUI (modern terminal UI with animations)
+ratatui = "0.28"
+crossterm = { version = "0.28", features = ["event-stream"] }
+
+# CLI arguments
+clap = { version = "4", features = ["derive", "color"] }
+
 # Utils
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
@@ -40,10 +47,30 @@ anyhow = "1"
 # System info
 sysinfo = "0.30"
 
+# Disk usage
+walkdir = "2"
+trash = "5"
+
+# Process detection
+which = "6"
+dirs = "6.0.0"
+
 [dev-dependencies]
 tokio-test = "0.4"
 tempfile = "3"
 
 [[bin]]
+name = "diskcortex"
+path = "src/main.rs"
+
+[[bin]]
 name = "diskcortex-daemon"
 path = "src/daemon/main.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+
+# Directories
+dirs = "5"
