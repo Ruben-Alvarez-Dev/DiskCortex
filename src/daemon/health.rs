@@ -1,7 +1,4 @@
-use axum::{
-    extract::State,
-    Json,
-};
+use axum::{Json};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
@@ -12,9 +9,7 @@ pub struct HealthResponse {
     pub version: String,
 }
 
-pub async fn health(
-    State(_pool): State<SqlitePool>,
-) -> Json<HealthResponse> {
+pub async fn health() -> Json<HealthResponse> {
     Json(HealthResponse {
         status: "ok".to_string(),
         time: chrono::Utc::now().to_rfc3339(),

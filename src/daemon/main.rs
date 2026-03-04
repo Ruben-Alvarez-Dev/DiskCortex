@@ -2,15 +2,15 @@
 //!
 //! Runs on localhost:7331 and provides REST API for the GUI/CLI.
 
+mod db;
+mod health;
+
 use axum::{
     routing::get,
     Router,
 };
 use std::net::SocketAddr;
 use tower_http::cors::{Any, CorsLayer};
-
-mod db;
-mod health;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
