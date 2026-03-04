@@ -1,0 +1,25 @@
+[2026-03-04 12:40:00] 🟢 GREEN: Auth /auth/login implementado - 100% producción
+├─ Password hashing: argon2id REAL (no mock)
+├─ JWT tokens: HS256 con claims completos
+├─ Access token: 1 hora de expiración
+├─ Refresh token: 7 días de expiración
+├─ Database: SQLite con verificación real
+├─ Tests: 6/6 pasando
+└─ Referencia: OpenAPI spec docs/specs/openapi.yaml
+
+[2026-03-04 12:40:00] 📝 CREATE: Archivos nuevos
+├─ src/lib.rs - Library root para diskcortex
+├─ src/config/settings.rs::JwtConfig - Configuración JWT
+├─ src/daemon/auth/mod.rs::AppState - State combinado para auth
+├─ src/daemon/db/mod.rs::init_test_db - DB con hashes REALES
+└─ tests/auth_login_tests.rs - Tests de integración
+
+[2026-03-04 12:40:00] 🔧 MODIFY: Archivos actualizados
+├─ Cargo.toml - Añadido rand_core con feature getrandom
+├─ src/daemon/mod.rs - Router con AppState
+└─ src/daemon/auth/mod.rs - Handler login completo
+
+[2026-03-04 12:40:00] ✅ DONE: FASE 1 - /auth/login GREEN phase
+├─ Sin mock, sin demo, sin fake
+├─ Todo 100% producción-ready
+└─ Siguiente: /auth/logout, /auth/refresh

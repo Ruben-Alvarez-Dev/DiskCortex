@@ -401,6 +401,28 @@ pub struct LoggingConfig {
     pub include_source: bool,
 }
 
+/// JWT configuration for authentication
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct JwtConfig {
+    /// Secret key for signing tokens
+    pub secret: String,
+    /// Access token expiration in seconds (default: 3600 = 1 hour)
+    pub expires_in: i64,
+    /// Issuer claim
+    pub issuer: String,
+}
+
+impl Default for JwtConfig {
+    fn default() -> Self {
+        Self {
+            secret: "diskcortex-default-secret-change-in-production".to_string(),
+            expires_in: 3600, // 1 hour
+            issuer: "diskcortex".to_string(),
+        }
+    }
+}
+
 impl Default for LoggingConfig {
     fn default() -> Self {
         Self {

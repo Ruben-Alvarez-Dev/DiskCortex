@@ -13,3 +13,6 @@ mod validator;
 pub use settings::*;
 pub use loader::*;
 pub use validator::*;
+
+// Re-export JwtConfig for auth module
+pub use settings::JwtConfig;

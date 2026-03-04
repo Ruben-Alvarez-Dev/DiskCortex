@@ -567,6 +567,7 @@ dependencies = [
  "crossterm",
  "dirs",
  "jsonwebtoken",
+ "rand_core",
  "ratatui",
  "serde",
  "serde_json",
