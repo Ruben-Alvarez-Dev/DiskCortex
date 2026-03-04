@@ -7,7 +7,7 @@ pub async fn init_db() -> Result<SqlitePool> {
         .connect("sqlite:diskcortex.db?mode=memory&cache=shared")
         .await?;
     
-    sqlx::query!(
+    sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,

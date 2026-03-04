@@ -1,6 +1,5 @@
-use axum::{Json};
+use axum::Json;
 use serde::{Deserialize, Serialize};
-use sqlx::SqlitePool;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HealthResponse {

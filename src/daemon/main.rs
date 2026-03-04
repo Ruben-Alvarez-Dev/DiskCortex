@@ -24,12 +24,11 @@ async fn main() -> anyhow::Result<()> {
         .with_state(db);
     
     // Start server
-    let addr = SocketAddr::from(([127, 0, 0, 1], 7331);
+    let addr = SocketAddr::from(([127, 0, 0, 1], 7331));
+    let listener = tokio::net::TcpListener::bind(addr).await?;
     println!("DiskCortex daemon listening on {}", addr);
     
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await?;
+    axum::serve(listener, app).await?;
     
     Ok(())
 }
