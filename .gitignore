@@ -34,9 +34,11 @@ Thumbs.db
 .AppleDouble
 .LSOverride
 
-# Logs
-logs/
-*.log
+# Logs del sistema (NO ignorar - son parte del tracking)
+# logs/        # ← Comentado para incluir en commits
+# *.log        # ← Comentado para incluir logs de proyecto
+
+# Logs de build/runtime (SÍ ignorar)
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
