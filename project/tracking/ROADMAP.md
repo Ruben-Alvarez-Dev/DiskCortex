@@ -1,7 +1,8 @@
 # 🗺️ DiskCortex - Roadmap
 
-> Última actualización: 2026-03-04
+> Última actualización: 2026-03-04 10:04
 > Estado: Desarrollo Activo - Fase 1 (Core API)
+> **Fuente única de verdad:** docs/specs/openapi.yaml
 
 ---
 
@@ -9,87 +10,102 @@
 
 | Componente | Progreso | Estado |
 |------------|----------|--------|
-| **OpenAPI Spec** | 100% | ✅ Completado |
-| **Daemon API** | 5% | 🚧 En Progreso |
-| **TUI** | 40% | 🚧 Básico Funcional |
-| **GUI** | 20% | 🚧 Estructura + API Client |
-| **Tests** | 5% | ⚠️ Crítico - Necesita TDD |
+| **OpenAPI Spec** | 100% | ✅ Completado - CONTRATO DEFINIDO |
+| **Daemon API** | 5% | 🚧 Solo /health |
+| **GUI** | 20% | 🚧 Conectada a API (sin mock data) |
+| **Tests** | 5% | ⚠️ Crítico |
 
 ---
 
-## 🎯 Épicas Actuales
+## 🎯 ROADMAP CRISTALINO (basado en OpenAPI)
 
-### EPIC-001: Core API Implementation
-**Prioridad:** CRÍTICA | **Sprint:** Actual
+### FASE 1: Auth & Users (PRIORIDAD 1)
+**Por qué:** Sin auth no hay seguridad, todo lo demás depende
 
-| ID | Tarea | Estado | Notas |
-|----|-------|--------|-------|
-| API-001 | Health endpoint | ✅ Done | /health funcionando |
-| API-002 | Auth endpoints | ❌ Todo | /auth/login, /auth/logout |
-| API-003 | Registry endpoints | ❌ Todo | CRUD de herramientas |
-| API-004 | Discovery scan | ❌ Todo | Auto-detección de tools |
-| API-005 | Cleanup execution | ❌ Todo | Borrado seguro |
+| Endpoint | Spec | Impl | Tests |
+|----------|------|------|-------|
+| `POST /auth/login` | ✅ | ❌ | ❌ |
+| `POST /auth/logout` | ✅ | ❌ | ❌ |
+| `POST /auth/refresh` | ✅ | ❌ | ❌ |
+| `GET /auth/session` | ✅ | ❌ | ❌ |
+| `GET /users` | ✅ | ❌ | ❌ |
+| `POST /users` | ✅ | ❌ | ❌ |
+| `GET /users/{id}` | ✅ | ❌ | ❌ |
 
-### EPIC-002: GUI React Application
-**Prioridad:** ALTA | **Sprint:** Actual
+### FASE 2: Registry & Discovery (PRIORIDAD 2)
+**Por qué:** Core del sistema - registro de herramientas
 
-| ID | Tarea | Estado | Notas |
-|----|-------|--------|-------|
-| GUI-001 | Eliminar mock data | ✅ Done | Conectado a API real |
-| GUI-002 | API Client (Axios) | ✅ Done | apiClient.ts creado |
-| GUI-003 | Tool Service | ✅ Done | toolService.ts creado |
-| GUI-004 | Loading/Error states | ✅ Done | UX mejorada |
-| GUI-005 | Auth UI | ❌ Todo | Login/logout |
-| GUI-006 | Cleanup UI | 🚧 WIP | Placeholder existe |
+| Endpoint | Spec | Impl | Tests |
+|----------|------|------|-------|
+| `GET /registry/tools` | ✅ | ❌ | ❌ |
+| `POST /registry/tools` | ✅ | ❌ | ❌ |
+| `GET /registry/tools/{id}` | ✅ | ❌ | ❌ |
+| `PUT /registry/tools/{id}` | ✅ | ❌ | ❌ |
+| `DELETE /registry/tools/{id}` | ✅ | ❌ | ❌ |
+| `POST /discovery/scan` | ✅ | ❌ | ❌ |
+| `GET /discovery/jobs/{id}` | ✅ | ❌ | ❌ |
 
-### EPIC-003: Testing & Quality
-**Prioridad:** CRÍTICA | **Sprint:** Próximo
+### FASE 3: Scans & Cleanup (PRIORIDAD 3)
+**Por qué:** Funcionalidad principal del sistema
 
-| ID | Tarea | Estado | Notas |
-|----|-------|--------|-------|
-| TEST-001 | Unit tests daemon | ❌ Todo | Target: 90% coverage |
-| TEST-002 | Integration tests | ❌ Todo | Target: 80% coverage |
-| TEST-003 | E2E tests GUI | ❌ Todo | Target: 70% coverage |
-| TEST-004 | TDD workflow | ❌ Todo | RED-GREEN-REFACTOR |
+| Endpoint | Spec | Impl | Tests |
+|----------|------|------|-------|
+| `POST /scans/full` | ✅ | ❌ | ❌ |
+| `POST /scans/tools` | ✅ | ❌ | ❌ |
+| `GET /scans/tools/usage` | ✅ | ❌ | ❌ |
+| `POST /cleanup/plan` | ✅ | ❌ | ❌ |
+| `POST /cleanup/execute` | ✅ | ❌ | ❌ |
+| `GET /cleanup/jobs/{id}` | ✅ | ❌ | ❌ |
+
+### FASE 4: Docker & Schedules (PRIORIDAD 4)
+**Por qué:** Features avanzadas
+
+| Endpoint | Spec | Impl | Tests |
+|----------|------|------|-------|
+| `GET /docker/images` | ✅ | ❌ | ❌ |
+| `POST /docker/prune` | ✅ | ❌ | ❌ |
+| `GET /schedules` | ✅ | ❌ | ❌ |
+| `POST /schedules` | ✅ | ❌ | ❌ |
 
 ---
 
-## 🚨 Deuda Técnica Identificada
+## 📅 Sprints Planificados
 
-| ID | Problema | Severidad | Acción |
-|----|----------|-----------|--------|
-| DEBT-001 | Mock data en producción | 🔴 CRÍTICO | ✅ RESUELTO |
-| DEBT-002 | println! en producción | 🟡 HIGH | ✅ RESUELTO (tracing) |
-| DEBT-003 | Funciones >20 líneas | 🟡 HIGH | commands.rs, settings.rs |
-| DEBT-004 | Sin CI/CD | 🟡 HIGH | Crear pipeline |
-| DEBT-005 | Coverage <10% | 🔴 CRÍTICO | Implementar TDD |
+### Sprint 1 (Actual): Auth + Users
+```
+🔴 RED:   Escribir tests para /auth/*
+🟢 GREEN: Implementar endpoints auth
+🔵 REFACTOR: Limpiar código
+```
+
+### Sprint 2: Registry + Discovery
+```
+🔴 RED:   Tests para /registry/* y /discovery/*
+🟢 GREEN: Implementar CRUD de tools
+🔵 REFACTOR: Optimizar queries
+```
+
+### Sprint 3: Scans + Cleanup
+```
+🔴 RED:   Tests para /scans/* y /cleanup/*
+🟢 GREEN: Implementar lógica de limpieza
+🔵 REFACTOR: Mejorar rendimiento
+```
 
 ---
 
-## 📅 Timeline
+## 🚨 Deuda Técnica (RESUELTA)
 
-### Sprint Actual (Marzo 2026)
-- [x] Eliminar mock data
-- [x] Crear API Client
-- [x] Implementar tracing
-- [ ] Completar auth endpoints
-- [ ] Tests básicos
-
-### Próximo Sprint
-- [ ] Discovery scan implementation
-- [ ] Registry CRUD
-- [ ] Aumentar coverage a 50%
-
-### Backlog
-- [ ] Docker integration
-- [ ] Scheduled cleanups
-- [ ] Compliance features
+| ID | Problema | Estado |
+|----|----------|--------|
+| DEBT-001 | Mock data en producción | ✅ RESUELTO |
+| DEBT-002 | println! en producción | ✅ RESUELTO |
+| DEBT-003 | Sin estructura tracking | ✅ RESUELTO |
 
 ---
 
 ## 🔗 Referencias
 
-- [OpenAPI Spec](../docs/specs/openapi.yaml)
-- [ADR-001: Tech Stack](../docs/architecture/adr/001-tech-stack.md)
-- [ADR-002: Safe Deletion](../docs/architecture/adr/002-safe-deletion-protocol.md)
-- [AUDIT_REPORT.md](../AUDIT_REPORT.md)
+- **CONTRATO API:** [docs/specs/openapi.yaml](../docs/specs/openapi.yaml)
+- **HANDOFF:** [CONTEXT_HANDOFF.md](./CONTEXT_HANDOFF.md)
+- **AUDITORÍA:** [AUDIT_REPORT.md](../../AUDIT_REPORT.md)
