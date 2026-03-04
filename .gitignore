@@ -68,3 +68,7 @@ temp/
 # Build artifacts
 *.tsbuildinfo
 .eslintcache
+
+# Rust build artifacts
+target/
+**/*.rs.bk
