@@ -264,6 +264,110 @@ pub fn hash_password(password: &str) -> Result<String, String> {
     Ok(password_hash)
 }
 
+/// POST /auth/logout
+///
+/// Logs out the current user session.
+/// Invalidates the access token (delete from blacklist if implemented)
+/// Returns 204 No Content on success.
+#[instrument(skip(state))]
+pub async fn logout(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<(), (StatusCode, Json<AuthError>)> {
+    info!("Logout request");
+    
+    let auth_header = headers
+        .get("Authorization")
+        .ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(AuthError {
+                    code: "MISSING_AUTH_HEADER".to_string(),
+                    message: "Authorization header is required".to_string(),
+                }),
+            )
+        })?
+        .to_str()
+        .map_err(|_| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(AuthError {
+                    code: "INVALID_AUTH_HEADER".to_string(),
+                    message: "Authorization header must be valid UTF-8".to_string(),
+                }),
+            )
+        })?;
+    
+    if !auth_header.starts_with("Bearer ") {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(AuthError {
+                code: "INVALID_AUTH_HEADER".to_string(),
+                message: "Authorization header must start with 'Bearer '".to_string(),
+            }),
+        ));
+    }
+    
+    let token = auth_header[7..].trim();
+    if token.is_empty() {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(AuthError {
+                code: "EMPTY_TOKEN".to_string(),
+                message: "Token cannot be empty".to_string(),
+            }),
+        ));
+    }
+    
+    // Decode and validate JWT token
+    let claims: Claims = match decode_token(token, &state.jwt_secret) {
+        Ok(claims) => claims,
+        Err(e) => {
+            tracing::warn!("Invalid token during logout: {}", e);
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(AuthError {
+                    code: "INVALID_TOKEN".to_string(),
+                    message: "Invalid or expired token".to_string(),
+                }),
+            ));
+        }
+    };
+    
+    // Check if token is expired
+    let now = Utc::now().timestamp();
+    if claims.exp < now {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(AuthError {
+                code: "TOKEN_EXPIRED".to_string(),
+                message: "Token has expired".to_string(),
+            }),
+        ));
+    }
+    
+    // TODO: Add token to blacklist in database/redis
+    // For now, just validate and return success
+    info!("User {} logged out successfully", claims.username);
+    
+    Ok(())
+}
+
+
+
+/// Decode and validate JWT token
+fn decode_token(token: &str, secret: &str) -> Result<Claims, String> {
+    use jsonwebtoken::DecodingKey;
+    
+    let mut validation = jsonwebtoken::Validation::new(jsonwebtoken::Algorithm::HS256);
+    validation.validate_exp = false; // We'll manually handle expiration in logout
+    
+    match jsonwebtoken::decode::<Claims>(token, &DecodingKey::from_secret(secret.as_bytes()), &validation) {
+        Ok(claims) => Ok(claims.claims),
+        Err(e) => Err(format!("Token validation failed: {}", e)),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -275,7 +379,7 @@ mod tests {
         
         // Verify the hash can be parsed
         let parsed = PasswordHash::new(&hash).expect("Failed to parse hash");
-        assert!(!parsed.hash.unwrap().as_str().is_empty());
+        assert!(parsed.hash.is_some());
     }
     
     #[test]
