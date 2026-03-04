@@ -1,0 +1,52 @@
+openapi: 3.1.0
+info:
+  title: DiskCortex Local API
+  version: 0.1.0
+  description: |
+    Local loopback API for DiskCortex GUI/CLI to discover tools, scan disk usage,
+    create cleanup plans, and execute safe cleanups with explicit user confirmation.
+    NEVER deletes without confirmation token.
+  license:
+    name: MIT
+servers:
+  - url: http://127.0.0.1:7331
+    description: Local daemon
+tags:
+  - name: system
+  - name: registry
+  - name: discovery
+  - name: scans
+  - name: cleanup
+  - name: docker
+  - name: schedules
+  - name: logs
+  - name: mcp
+security:
+  - SessionTokenAuth: []
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Health check
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+components:
+  securitySchemes:
+    SessionTokenAuth:
+      type: apiKey
+      in: header
+      name: X-Session-Token
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        time:
+          type: string
+          format: date-time
