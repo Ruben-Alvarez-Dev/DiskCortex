@@ -1,0 +1,49 @@
+[package]
+name = "diskcortex"
+version = "0.1.0"
+edition = "2021"
+authors = ["Ruben-Alvarez-Dev"]
+license = "MIT"
+description = "Enterprise-grade disk cleanup automation daemon"
+repository = "https://github.com/Ruben-Alvarez-Dev/DiskCortex"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Web framework
+axum = "0.7"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
+
+# Authentication
+jsonwebtoken = "9"
+argon2 = "0.5"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Utils
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "1"
+anyhow = "1"
+
+# System info
+sysinfo = "0.30"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3"
+
+[[bin]]
+name = "diskcortex-daemon"
+path = "src/daemon/main.rs"
