@@ -16,9 +16,12 @@ use crossterm::{
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
 use std::time::Duration;
+use tracing::{error, info};
 
 /// Run the TUI application
 pub fn run() -> Result<()> {
+    info!("Starting TUI application");
+    
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
@@ -32,11 +35,12 @@ pub fn run() -> Result<()> {
     execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
     terminal.show_cursor()?;
 
-    if let Err(err) = res {
-        eprintln!("Error: {:?}", err);
+    if let Err(ref err) = res {
+        error!(error = ?err, "TUI application error");
     }
 
-    Ok(())
+    info!("TUI application terminated");
+    res
 }
 
 fn run_app<B: ratatui::backend::Backend>(

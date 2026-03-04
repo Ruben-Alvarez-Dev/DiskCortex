@@ -4,10 +4,16 @@
 
 mod tools;
 mod tui;
-
+pub mod config;
+pub mod cleaner;
 use anyhow::Result;
+use config::ConfigLoader;
 
 fn main() -> Result<()> {
+    // Load configuration
+    let loader = ConfigLoader::new();
+    let _config = loader.load().unwrap_or_default();
+    
     // Run the TUI
     tui::run()
 }
