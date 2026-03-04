@@ -5,56 +5,23 @@
 **Duration:** 1 week  
 **Ceremonies:**
 - Monday: Sprint Planning
-- Daily: Standup (async via GitHub)
+- Daily: Standup (async)
 - Friday: Sprint Review + Retrospective
 
-## Commit Schedule
-
-### Organic GitHub Activity Simulation
-
-To maintain realistic development patterns:
-
-**Daily Commits:** 1-5 commits
-**Pattern:**
-- Morning (9-11h): 1-2 commits (planning, docs)
-- Afternoon (14-17h): 2-3 commits (implementation)
-- Evening (19-21h): 0-1 commits (fixes, refactors)
-
-**Commit Distribution:**
-- 40% Feature commits
-- 25% Test commits
-- 20% Refactor commits
-- 15% Documentation commits
-
-### Weekly Schedule
-
-**Week 1-2:** Foundation (Sprint 1-2)
-- Project setup
-- Core architecture
-- Basic scanning
-
-**Week 3-4:** Features (Sprint 3-4)
-- GUI development
-- Tool registry
-- Cleanup logic
-
-**Week 5-6:** Polish (Sprint 5-6)
-- Testing
-- Documentation
-- Release prep
-
-## GitHub Push Strategy
+## Branch Strategy
 
 ### Protected Branches
-- `main` - Requires PR + 1 approval
-- `develop` - Requires PR
+- `main` - Production-ready code
+- `develop` - Integration branch
 
 ### Feature Workflow
 ```
 develop → feature/XXX → develop (PR) → main (release)
 ```
 
-### Commit Message Format
+## Commit Message Format
+
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>(<scope>): <short description>
@@ -82,5 +49,4 @@ fix(docker): handle permission errors
 
 ---
 
-**Note:** This workflow ensures professional, sustainable development pace.
-
+**Questions?** Open an issue or contact the team.
