@@ -6,6 +6,8 @@ mod tools;
 mod tui;
 pub mod config;
 pub mod cleaner;
+pub mod daemon;
+
 use anyhow::Result;
 use config::ConfigLoader;
 

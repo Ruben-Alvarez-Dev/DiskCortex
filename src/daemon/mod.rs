@@ -1,21 +1,25 @@
+//! Daemon modules
+
+pub mod auth;
+pub mod db;
+pub mod health;
+
+pub use auth::*;
+pub use db::*;
+pub use health::*;
+
 use axum::{
-    extract::State,
-    Json,
+    Router,
+    routing::{get, post},
 };
-use serde::{Deserialize, Serialize};
-use std::time::{SystemTime, UNIX_EPOCH};
+use sqlx::SqlitePool;
+use tower_http::cors::{Any, CorsLayer};
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct HealthResponse {
-    status: String,
-    time: String,
-    version: String,
-}
-
-pub async fn health() -> Json<HealthResponse> {
-    Json(HealthResponse {
-        status: "ok".to_string(),
-        time: chrono::Utc::now().to_rfc3339(),
-        version: env!("CARGO_PKG_VERSION").to_string(),
-    })
+/// Create the daemon router with database state
+pub fn create_app_with_db(db: SqlitePool) -> Router {
+    Router::new()
+        .route("/health", get(health))
+        .route("/auth/login", post(login))
+        .layer(CorsLayer::new().allow_origin(Any))
+        .with_state(db)
 }

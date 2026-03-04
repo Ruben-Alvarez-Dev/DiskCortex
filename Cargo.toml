@@ -13,12 +13,13 @@ tokio = { version = "1", features = ["full"] }
 
 # Web framework (daemon API)
 axum = "0.7"
-tower = "0.4"
+tower = { version = "0.5", features = ["util"] }
 tower-http = { version = "0.5", features = ["cors", "trace"] }
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+serde_yaml = "0.9"
 
 # Database
 sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
@@ -72,5 +73,4 @@ opt-level = 3
 lto = true
 strip = true
 
-# Directories
-dirs = "5"
+

@@ -1,5 +1,9 @@
+//! Database module
+
 use anyhow::Result;
 use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
+
+pub type DbState = SqlitePool;
 
 pub async fn init_db() -> Result<SqlitePool> {
     let pool = SqlitePoolOptions::new()
@@ -74,6 +78,49 @@ pub async fn init_db() -> Result<SqlitePool> {
         );
         "#,
     )
+    .execute(&pool)
+    .await?;
+    
+    Ok(pool)
+}
+
+/// Create in-memory database for tests
+#[cfg(test)]
+pub async fn init_test_db() -> Result<SqlitePool> {
+    let pool = SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await?;
+    
+    // Run migrations
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            username TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'viewer',
+            active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        "#,
+    )
+    .execute(&pool)
+    .await?;
+    
+    // Insert test user with pre-hashed password
+    // Password "admin123" hashed with argon2
+    let password_hash = "$argon2id$v=19$m=19456,t=2,p=1$test_salt$test_hash";
+    
+    sqlx::query(
+        r#"
+        INSERT INTO users (id, username, email, password_hash, role, active, created_at, updated_at)
+        VALUES ('test-user-id', 'admin', 'admin@test.com', ?, 'admin', 1, datetime('now'), datetime('now'))
+        "#,
+    )
+    .bind(password_hash)
     .execute(&pool)
     .await?;
     
